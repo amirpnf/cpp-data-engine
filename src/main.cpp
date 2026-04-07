@@ -2,26 +2,34 @@
 #include <vector>
 #include <string>
 #include "csv_reader.h"
+#include "pipeline.h"
 #include "operations.h"
 
 int main(int argc, char** argv) {
-    //std::cout << "Data Engine started" << std::endl;
     std::vector<Row> rows;
     rows = read_csv("test.csv");
 
-    std::vector<Row> new_rows = filter_rows(rows, [](const Row& r) {
-        if(r.values[3] == "Paris") return true;
-        return false;
+    auto normal = filter_rows(rows, [](const Row& r) {
+        return r.values.size() > 3 && r.values[3] == "Paris";
     });
 
-    for (const Row& r : new_rows) {
-        std::cout << r.id << " : ";
+    auto parallel = filter_rows_parallel(rows, [](const Row& r) {
+        return r.values.size() > 3 && r.values[3] == "Paris";
+    }, 4);
 
-        for (const auto& val : r.values) {
-            std::cout << val << " ";
+    std::cout << "Normal size: " << normal.size() << std::endl;
+    std::cout << "Parallel size: " << parallel.size() << std::endl;
+
+
+    bool same = (normal.size() == parallel.size());
+
+    for (size_t i = 0; i < normal.size() && same; i++) {
+        if (normal[i].id != parallel[i].id) {
+            same = false;
         }
-
-        std::cout << std::endl;
     }
+
+    std::cout << "Same result? " << same << std::endl;
+    
     return 0;
 }
