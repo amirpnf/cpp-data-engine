@@ -1,6 +1,7 @@
 #include "operations.h"
 #include <thread>
 #include <algorithm>
+#include <unordered_set>
 
 std::vector<Row> map_rows(
     const std::vector<Row>& data,
@@ -146,6 +147,58 @@ T reduce_rows_parallel(
     T result = initial;
     for(const T& val : partial_results) {
         result = combine(result, val);
+    }
+    return result;
+}
+
+size_t count_rows(const std::vector<Row>& data) {
+    int count = 0;
+    for(const auto& v : data) {
+        count++;
+    }
+    return count;
+}
+
+std::unordered_map<std::string, std::vector<Row>>
+groupby(
+    const std::vector<Row>& data,
+    std::function<std::string(const Row&)> key_func
+) {
+
+    std::unordered_map<std::string, std::vector<Row>> groups;
+    if(data.empty()) return groups;
+
+    for(const auto& row : data) {
+        std::string group = key_func(row);
+        groups[group].push_back(row);
+    }
+
+    return groups;
+}
+
+std::vector<Row> sort_rows(
+    const std::vector<Row>& data,
+    std::function<bool(const Row&, const Row&)> comp
+) {
+
+    auto sorted = data;
+    std::stable_sort(sorted.begin(), sorted.end(), comp);
+    return sorted;
+}
+
+std::vector<Row> distinct_row(
+    const std::vector<Row>& data
+) {
+    std::vector<Row> result;
+    std::unordered_set<Row, RowHash> seen;
+
+    result.reserve(data.size());
+
+    for(const auto& row : data) {
+        if(seen.find(row) == seen.end()) {
+            seen.insert(row);
+            result.push_back(row);
+        }
     }
     return result;
 }
