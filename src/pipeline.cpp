@@ -38,6 +38,21 @@ size_t Pipeline::count() {
     return count_rows(final_data); 
 }
 
+std::vector<double> Pipeline::feature_to_double(int column_idx) {
+    auto final_rows = this->run();
+    std::vector<double> column_data;
+    column_data.reserve(final_rows.size());
+
+    for(const auto& row : final_rows) {
+        try {
+            column_data.push_back(std::stod(row.get(column_idx)));
+        } catch(...) {
+            column_data.push_back(0.0); // Handling non-numeric data gracefully (for now) 
+        }
+    }
+    return column_data;
+}
+
 
 std::vector<Row> Pipeline::run() {
     std::vector<Row> data = *input;

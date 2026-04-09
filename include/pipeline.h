@@ -17,6 +17,8 @@ class Pipeline {
         Pipeline& sort(std::function<bool(const Row&, const Row&)> comp);
         Pipeline& distinct();
         size_t count(); 
+
+        std::vector<double> feature_to_double(int column_idx);
         
         template<typename T>
         T reduce(std::function<T(T, const Row&)> reducer, T initial) {
