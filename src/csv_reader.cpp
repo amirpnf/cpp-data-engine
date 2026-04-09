@@ -17,7 +17,6 @@ vector<Row> read_csv(string filename) {
 
     while(getline(lines, line)) {
         row = parse_line(line);
-        row.id = index;
         rows.push_back(row);
         index++; 
     }

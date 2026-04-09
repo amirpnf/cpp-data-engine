@@ -6,10 +6,16 @@
 struct Row {
     std::vector<std::string> values;
 
+    std::string get(size_t index) const {
+        if (index < values.size()) {
+            return values[index];
+        }
+        return ""; 
+    }
+
     bool operator==(const Row& other) const {
         return (values == other.values);
     }
-
 };
 
 struct RowHash {

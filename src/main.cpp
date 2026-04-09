@@ -1,35 +1,44 @@
 #include <iostream>
+#include <memory>
 #include <vector>
-#include <string>
-#include "csv_reader.h"
 #include "pipeline.h"
-#include "operations.h"
+#include "csv_reader.h" // Assuming this is your reader class
 
-int main(int argc, char** argv) {
-    std::vector<Row> rows;
-    rows = read_csv("test.csv");
+enum Schema {
+    ID = 0,
+    AREA = 1,
+    ROOMS = 2,
+    PRICE = 3,
+    TYPE = 4
+};
 
-    auto normal = filter_rows(rows, [](const Row& r) {
-        return r.values.size() > 3 && r.values[3] == "Paris";
-    });
+int main() {
+    // 1. Load Data
+    auto data = std::make_shared<std::vector<Row>>(read_csv("test2.csv"));
+    Pipeline pipe(data);
 
-    auto parallel = filter_rows_parallel(rows, [](const Row& r) {
-        return r.values.size() > 3 && r.values[3] == "Paris";
-    }, 4);
+    std::cout << "--- Starting Data Engine Test ---" << std::endl;
 
-    std::cout << "Normal size: " << normal.size() << std::endl;
-    std::cout << "Parallel size: " << parallel.size() << std::endl;
+    auto results = pipe.filter([](const Row& r) {
+        // Accessing by index using our enum
+        return r.get(Schema::TYPE) == "house"; 
+    })
+    .map([](const Row& r) {
+        Row new_row = r;
+        double price = std::stod(r.get(Schema::PRICE));
+        
+        // ML scaling example: log transformation or normalization
+        // Since Row is just a vector, we can append a new "column"
+        new_row.values.push_back(std::to_string(price / 1000.0));
+        return new_row;
+    })
+    .run();
 
-
-    bool same = (normal.size() == parallel.size());
-
-    for (size_t i = 0; i < normal.size() && same; i++) {
-        if (normal[i].id != parallel[i].id) {
-            same = false;
-        }
+    // Verification
+    for (const auto& row : results) {
+        std::cout << "House ID: " << row.get(Schema::ID) 
+                  << " | Price (K): " << row.values.back() << std::endl;
     }
 
-    std::cout << "Same result? " << same << std::endl;
-    
     return 0;
 }

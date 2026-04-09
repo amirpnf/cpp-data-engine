@@ -18,6 +18,27 @@ Pipeline& Pipeline::filter(std::function<bool(const Row&)> predicate) {
     return *this;
 }
 
+Pipeline& Pipeline::sort(std::function<bool(const Row&, const Row&)> comp) {
+
+    ops.push_back([comp](const std::vector<Row>& data){
+        return sort_rows(data, comp);
+    }) ;
+    return *this;
+}
+
+Pipeline& Pipeline::distinct() {
+    ops.push_back([](const std::vector<Row>& data) {
+        return distinct_rows(data);
+    });
+    return *this;
+}
+
+size_t Pipeline::count() {
+    std::vector<Row> final_data = this->run();
+    return count_rows(final_data); 
+}
+
+
 std::vector<Row> Pipeline::run() {
     std::vector<Row> data = *input;
     for(auto& op : ops) {
