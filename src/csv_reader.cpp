@@ -7,9 +7,15 @@
 using namespace std;
 
 vector<Row> read_csv(string filename) {
+    
     vector<Row> rows;
     string line;
     ifstream lines(filename);
+
+    if(!lines.is_open()) {
+        throw runtime_error("Error : Could not find or open " + filename);
+    }
+
     int index = 1;
 
     getline(lines, line); // skipping the first line
