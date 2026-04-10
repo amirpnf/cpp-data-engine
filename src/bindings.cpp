@@ -17,7 +17,8 @@ PYBIND11_MODULE(cpp_data_engine, m) {
     py::class_<Pipeline>(m, "Pipeline")
         .def("run", &Pipeline::run)
         .def("feature_to_double", &Pipeline::feature_to_double)
-        .def("count", &Pipeline::count);
+        .def("count", &Pipeline::count)
+        .def("normalize_column", &Pipeline::normalize_column);
 
     m.def("load_data", [](std::string path) {
         auto data = std::make_shared<std::vector<Row>>(read_csv(path));
