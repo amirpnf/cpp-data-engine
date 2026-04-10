@@ -45,7 +45,7 @@ std::vector<double> Pipeline::feature_to_double(int column_idx) {
 
     for(const auto& row : final_rows) {
         try {
-            column_data.push_back(std::stod(row.get(column_idx)));
+            column_data.push_back(safe_stod(row.get(column_idx)));
         } catch(...) {
             column_data.push_back(0.0); // Handling non-numeric data gracefully (for now) 
         }
@@ -61,7 +61,7 @@ void Pipeline::normalize_column(int column_idx) {
     double max_val = std::numeric_limits<double>::min();
 
     for(const auto& row : current_data) {
-        double val = std::stod(row.get(column_idx));
+        double val = safe_stod(row.get(column_idx));
         if(val < min_val) min_val = val;
         if(val > max_val) max_val = val;
     }
@@ -72,7 +72,7 @@ void Pipeline::normalize_column(int column_idx) {
     this->add_task([column_idx, min_val, range](const std::vector<Row>& data) {
         return map_rows_parallel(data, [column_idx, min_val, range](const Row& row) {
             try {
-                double old_val = std::stod(row.get(column_idx));
+                double old_val = safe_stod(row.get(column_idx));
                 double normalized = (old_val - min_val) / range;
                 return row.with_value(column_idx, std::to_string(normalized));
             } catch(...) {

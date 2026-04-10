@@ -2,6 +2,7 @@
 #include <thread>
 #include <algorithm>
 #include <unordered_set>
+#include <iostream>
 
 std::vector<Row> map_rows(
     const std::vector<Row>& data,
@@ -141,4 +142,14 @@ std::vector<Row> distinct_rows(
         }
     }
     return result;
+}
+
+double safe_stod(const std::string& str) {
+    try {
+        if (str.empty()) return 0.0;
+        return std::stod(str);
+    } catch (...) {
+        std::cerr << "Can't convert " << str << " to double " << std::endl;
+        return 0.0; 
+    }
 }

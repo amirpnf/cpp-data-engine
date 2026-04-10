@@ -102,4 +102,6 @@ std::vector<Row> distinct_rows(
     const std::vector<Row>& data
 );
 
+double safe_stod(const std::string& str);
+
 #endif
