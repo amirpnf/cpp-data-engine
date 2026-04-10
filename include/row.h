@@ -13,6 +13,14 @@ struct Row {
         return ""; 
     }
 
+    Row with_value(int column_idx, const std::string& new_value) const {
+        Row copy = *this; 
+        if (column_idx >= 0 && column_idx < copy.values.size()) {
+            copy.values[column_idx] = new_value; 
+        }
+        return copy;
+    }
+
     bool operator==(const Row& other) const {
         return (values == other.values);
     }

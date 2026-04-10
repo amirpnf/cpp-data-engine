@@ -19,6 +19,7 @@ class Pipeline {
         size_t count(); 
 
         std::vector<double> feature_to_double(int column_idx);
+        void normalize_column(int column_idx);
         
         template<typename T>
         T reduce(std::function<T(T, const Row&)> reducer, T initial) {
@@ -33,5 +34,6 @@ class Pipeline {
         }
 
         std::vector<Row> run();
+        void add_task(std::function<std::vector<Row>(const std::vector<Row>&)> task);
 
 };

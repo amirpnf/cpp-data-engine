@@ -53,6 +53,35 @@ std::vector<double> Pipeline::feature_to_double(int column_idx) {
     return column_data;
 }
 
+void Pipeline::normalize_column(int column_idx) {
+    auto current_data = this->run();
+    if(current_data.empty()) return;
+
+    double min_val = std::numeric_limits<double>::max();
+    double max_val = std::numeric_limits<double>::min();
+
+    for(const auto& row : current_data) {
+        double val = std::stod(row.get(column_idx));
+        if(val < min_val) min_val = val;
+        if(val > max_val) max_val = val;
+    }
+
+    double range = max_val - min_val;
+    if(range == 0) return;
+
+    this->add_task([column_idx, min_val, range](const std::vector<Row>& data) {
+        return map_rows_parallel(data, [column_idx, min_val, range](const Row& row) {
+            try {
+                double old_val = std::stod(row.get(column_idx));
+                double normalized = (old_val - min_val) / range;
+                return row.with_value(column_idx, std::to_string(normalized));
+            } catch(...) {
+                return row; 
+            }
+        }, 4);
+    });
+}
+
 
 std::vector<Row> Pipeline::run() {
     std::vector<Row> data = *input;
@@ -60,4 +89,8 @@ std::vector<Row> Pipeline::run() {
         data = op(data);
     }
     return data;
+}
+
+void Pipeline::add_task(std::function<std::vector<Row>(const std::vector<Row>&)> task) {
+    ops.push_back(task);
 }
