@@ -1,39 +1,34 @@
-#include <iostream>
+#include "csv_reader.h"
 #include <fstream>
 #include <sstream>
-#include <vector>
-#include "row.h"
-#include "csv_reader.h"
-using namespace std;
 
-vector<Row> read_csv(string filename) {
-    
-    vector<Row> rows;
-    string line;
-    ifstream lines(filename);
+std::vector<Row> CSVReader::read_all() {
+    std::vector<Row> rows;
+    std::string line;
+    std::ifstream lines(filename);
 
     if(!lines.is_open()) {
-        throw runtime_error("Error : Could not find or open " + filename);
+        throw std::runtime_error("Error : Could not find or open " + filename);
     }
 
-    int index = 1;
-
-    getline(lines, line); // skipping the first line
-    Row row;
+    if(getline(lines, line)) {
+        std::stringstream ss(line);
+        std::string cell;
+        while(getline(ss, cell, ',')) {
+            headers.push_back(cell);
+        }
+    }
 
     while(getline(lines, line)) {
-        row = parse_line(line);
-        rows.push_back(row);
-        index++; 
+        rows.push_back(parse_line(line));
     }
     return rows;
 }
 
-Row parse_line(const string& line) {
+Row parse_line(const std::string& line) {
     Row row;
-    stringstream ss(line);
-    string cell;
-
+    std::stringstream ss(line);
+    std::string cell;
     while(getline(ss, cell, ',')) {
         row.values.push_back(cell);
     }

@@ -1,8 +1,13 @@
 #include "pipeline.h"
 #include <vector>
+#include <stdexcept>
 #include "operations.h"
 
-Pipeline::Pipeline(std::shared_ptr<const std::vector<Row>> input) : input(input) {}
+Pipeline::Pipeline(std::shared_ptr<const std::vector<Row>> input, const std::vector<std::string>& headers) : input(input) {
+    for(int i = 0; i < headers.size(); i++) {
+        header_map[headers[i]] = i;
+    }
+}
 
 Pipeline& Pipeline::map(std::function<Row(const Row&)> func) {
     ops.push_back([func](const std::vector<Row>& data) {
@@ -53,12 +58,27 @@ std::vector<double> Pipeline::feature_to_double(int column_idx) {
     return column_data;
 }
 
+void Pipeline::normalize_column(const std::string& col_name) {
+    if(header_map.count(col_name)) {
+        normalize_column(header_map[col_name]);
+    } else {
+        throw std::runtime_error("Column not found : " + col_name);
+    }
+}
+
+std::vector<double> Pipeline::feature_to_double(const std::string& col_name) {
+    if(header_map.count(col_name)) {
+        return feature_to_double(header_map[col_name]);
+    }
+    throw std::runtime_error("Column not found : " + col_name);;
+}
+
 void Pipeline::normalize_column(int column_idx) {
     auto current_data = this->run();
     if(current_data.empty()) return;
 
     double min_val = std::numeric_limits<double>::max();
-    double max_val = std::numeric_limits<double>::min();
+    double max_val = std::numeric_limits<double>::lowest();
 
     for(const auto& row : current_data) {
         double val = safe_stod(row.get(column_idx));
@@ -93,4 +113,31 @@ std::vector<Row> Pipeline::run() {
 
 void Pipeline::add_task(std::function<std::vector<Row>(const std::vector<Row>&)> task) {
     ops.push_back(task);
+}
+
+std::vector<std::vector<double>> Pipeline::to_matrix(const std::vector<std::string>& selected_columns) {
+    std::vector<Row> final_data = this->run();
+
+    std::vector<std::vector<double>> matrix;
+    matrix.reserve(final_data.size());
+
+    std::vector<int> indices;
+    for(const auto& name : selected_columns) {
+        if(header_map.count(name)) {
+            indices.push_back(header_map[name]);
+        } else {
+            throw std::runtime_error("Column not found during materialization : " + name);
+        }
+    }
+
+    for(const auto& row : final_data) {
+        std::vector<double> numeric_row;
+        numeric_row.reserve(indices.size());
+
+        for(int idx : indices) {
+            numeric_row.push_back(safe_stod(row.get(idx)));
+        }
+        matrix.push_back(numeric_row);
+    }
+    return matrix;
 }
